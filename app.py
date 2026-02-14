@@ -1,40 +1,37 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from timezonefinder import TimezoneFinder
 import pytz
 from datetime import datetime
 
-app = FastAPI()
+app = FastAPI(
+    title="Timezone Finder API",
+    description="Find timezone, current time, and GMT offset from geographic coordinates.",
+    version="1.0.0",
+)
 
-# Membuat objek TimezoneFinder
 tf = TimezoneFinder()
+
 
 @app.get("/")
 async def root():
-    return {"message": "Humanis Timezone API is running!"}
+    return {"message": "Timezone Finder API is running!"}
 
-@app.get("/humanis_timezone")
-async def get_current_time(lat: float, lon: float):
+
+@app.get("/timezone")
+async def get_timezone(
+    lat: float = Query(..., ge=-90, le=90, description="Latitude (-90 to 90)"),
+    lon: float = Query(..., ge=-180, le=180, description="Longitude (-180 to 180)"),
+):
     """
-    Mengambil waktu saat ini berdasarkan latitude dan longitude.
-    
-    :param lat: Latitude dari lokasi.
-    :param lon: Longitude dari lokasi.
-    :return: Zona waktu dan waktu saat ini sebagai string.
+    Get current time and timezone information based on latitude and longitude.
     """
-    
-    # Mendapatkan nama zona waktu berdasarkan koordinat
     timezone_name = tf.timezone_at(lat=lat, lng=lon)
 
     if not timezone_name:
         return {"error": "Timezone not found for the given coordinates."}
 
-    # Menggunakan pytz untuk mendapatkan informasi zona waktu dan menghitung offset GMT saat ini
     tz = pytz.timezone(timezone_name)
-    
-    # Mendapatkan waktu saat ini dalam zona waktu tersebut 
     current_time = datetime.now(tz)
-
-    # Mendapatkan offset GMT dalam jam 
     gmt_offset_hours = current_time.utcoffset().total_seconds() / 3600
 
     return {

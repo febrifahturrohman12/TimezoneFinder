@@ -2,4 +2,3 @@ timezonefinder
 fastapi
 uvicorn
 pytz
-datetime
